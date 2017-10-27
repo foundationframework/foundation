@@ -24,10 +24,18 @@
  *
  */
 
+use Foundation\Application;
+
 class FFString
 {
     public function __construct($var)
     {
+        $type = gettype($var);
+
+        if ($type == 'array' || $type == 'object') {
+            Application::dieWithStack('Cannot convert ' . $type . ' to string');
+        }
+
         $this->_value = $var;
     }
 

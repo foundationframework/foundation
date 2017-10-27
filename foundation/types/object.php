@@ -24,7 +24,9 @@
  *
  */
 
-class FFObject implements JsonSerializable
+use Foundation\Application;
+
+class FFObject
 {
     protected $_type   = 'stdClass';
     protected $_value;
@@ -40,11 +42,8 @@ class FFObject implements JsonSerializable
         {
             case 'integer':
             case 'double':
-                $this->_value = new FFNumber($var);
-                break;
-
             case 'string':
-                $this->_value = new FFString($var);
+                Application::dieWithStack('Cannot convert ' . $this->_type . ' to generic object');
                 break;
 
             case 'array':
@@ -60,7 +59,6 @@ class FFObject implements JsonSerializable
                 $this->_value = $var;
                 break;
         }
-
     }
 
     function __get($name)
@@ -72,6 +70,14 @@ class FFObject implements JsonSerializable
         throw new \Exception('Property \'' . $name . '\' does not exist in this object');
     }
 
+    /**
+     *
+     * Easily add a property to the object
+     *
+     * @param string $name
+     * @param mixed $value
+     *
+     */
     function __set($name, $value)
     {
         $type = gettype($value);
@@ -85,7 +91,7 @@ class FFObject implements JsonSerializable
         } elseif ($type == 'object') {
             $class = get_class($value);
 
-            if ($class != 'FFObject') {
+            if ($class == 'stdClass') {
                 $val = new FFObject();
 
                 foreach ($value as $k => $v) {
@@ -99,26 +105,6 @@ class FFObject implements JsonSerializable
         }
 
         $this->_value->{$name} = $val;
-    }
-
-    /**
-     *
-     * Get the php raw value of this object
-     *
-     * @return  mixed
-     *
-     */
-    final public function raw()
-    {
-        echo '<pre>';
-
-        foreach ($this as $key => $value) {
-            print_r($value);
-
-            $parent = get_parent_class($value);
-
-            print_r($parent);
-        }
     }
 
     /**
@@ -138,11 +124,59 @@ class FFObject implements JsonSerializable
 
     /**
      *
-     * Serialize to json using php's interface
+     * Return a standard class
+     *
+     * @return stdClass
      *
      */
-    final public function jsonSerialize()
+    public function toNative()
     {
+        $out = new stdClass();
 
+        foreach ($this->_value as $key => $value) {
+            $type = gettype($value);
+
+            if ($type == 'object') {
+                $class = get_class($value);
+
+                if ($class === 'stdClass') {
+                    $out[$key] = $value;
+                } else {
+                    switch ($class) {
+                        case 'FFNumber':
+                            $out->$key = $value->toNative();
+                            break;
+
+                        case 'FFObject':
+                            $out->$key = $value->toNative();
+                            break;
+
+                        case 'FFString':
+                            $out->$key = (string)$value;
+                            break;
+
+                        default:
+                            $out->$key = $value;
+                            break;
+                    }
+                }
+            } else {
+                $out->$key = $value;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     *
+     * turn object into JSON string
+     *
+     * @return  String
+     *
+     */
+    public function json()
+    {
+        return json_encode($this->toNative());
     }
 }

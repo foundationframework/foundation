@@ -37,9 +37,17 @@ class Application extends FFObject
         $class       = new \stdClass();
         $class->test = 'test';
 
-        $arr = new FFArray(['hello', 'world', '!', 25, 52.52, $class]);
+        $arr  = new FFArray(['hello', 'world', '!']);
+        $arr2 = new FFArray(['hello', 'world']);
 
-        echo $arr->index(5);
+        $json   = $arr->json();
+        $native = $arr->toNative();
+
+        $arr3 = $arr->intersect($arr2);
+
+        print_r($arr3);
+
+        //print_r($arr2);
     }
 
     /**

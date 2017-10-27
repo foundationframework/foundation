@@ -24,20 +24,53 @@
  *
  */
 
+use Foundation\Application;
+
 class FFNumber
 {
     public function __construct($var)
     {
         $this->_type  = gettype($var);
+
+        if (!is_numeric($var)) {
+            Application::dieWithStack("Value is not a number");
+        }
+
         $this->_value = $var;
     }
 
+    /**
+     *
+     * Create an FFString instance
+     *
+     * @return FFString
+     *
+     */
     public function stringObject(): FFString
     {
         return new FFString($this->_value);
     }
 
+    /**
+     *
+     * Object being downcast as string
+     *
+     * @return string
+     *
+     */
     public function __toString()
+    {
+        return (string)$this->_value;
+    }
+
+    /**
+     *
+     * Get the native numeric value
+     *
+     * @return int|double
+     *
+     */
+    public function toNative()
     {
         return $this->_value;
     }
